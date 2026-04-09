@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP.Net Core app to Azure Web App - ps200-hw3
+name: Build and deploy ASP.NET Framework app to Azure Web App - ps200-hw3
 
 on:
   push:
@@ -13,27 +13,34 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.x'
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+      - name: Restore packages
+        run: nuget restore aspnet-get-started.sln
+
+      - name: Build and publish with MSBuild
+        run: >
+          msbuild aspnet-get-started.sln
+          /p:Configuration=Release
+          /p:Platform="Any CPU"
+          /p:DeployOnBuild=true
+          /p:WebPublishMethod=FileSystem
+          /p:PublishUrl="${{ github.workspace }}\published-app"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: ${{ github.workspace }}\published-app
 
   deploy:
     runs-on: windows-latest
