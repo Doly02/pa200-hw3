@@ -31,7 +31,7 @@ jobs:
         run: >
           msbuild aspnet-get-started\aspnet-get-started.csproj
           /p:Configuration=Release
-          /p:Platform="Any CPU"
+          /p:Platform=AnyCPU
           /p:DeployOnBuild=true
           /p:WebPublishMethod=Package
           /p:PackageAsSingleFile=false
