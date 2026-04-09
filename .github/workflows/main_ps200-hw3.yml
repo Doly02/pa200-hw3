@@ -29,18 +29,18 @@ jobs:
 
       - name: Build and publish with MSBuild
         run: >
-          msbuild aspnet-get-started.sln
+          msbuild aspnet-get-started\aspnet-get-started.csproj
           /p:Configuration=Release
           /p:Platform="Any CPU"
           /p:DeployOnBuild=true
-          /p:WebPublishMethod=FileSystem
-          /p:PublishUrl="${{ github.workspace }}\published-app"
+          /p:WebPublishMethod=Package
+          /p:PackageAsSingleFile=false
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{ github.workspace }}\published-app
+          path: ${{ github.workspace }}\aspnet-get-started\obj\Release\Package\PackageTmp
 
   deploy:
     runs-on: windows-latest
