@@ -59,7 +59,7 @@ namespace aspnet_get_started.Controllers
 
             if (string.IsNullOrWhiteSpace(connectionString))
             {
-                throw new ConfigurationErrorsException("V ConnectionStrings.config chybi AzureStorageConnectionString.");
+                throw new ConfigurationErrorsException("V konfiguraci chybi AzureStorageConnectionString.");
             }
 
             var queueClient = new QueueClient(connectionString, queueName);
