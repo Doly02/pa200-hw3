@@ -243,3 +243,4 @@ _Pvt_Extensions
 .idea/
 *.sln.iml
 
+aspnet-get-started/ConnectionStrings.config
