@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Configuration;
-using System.Text;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using Azure.Storage.Queues;
+using Newtonsoft.Json;
+using aspnet_get_started.Models;
 
 namespace aspnet_get_started.Controllers
 {
@@ -11,7 +12,7 @@ namespace aspnet_get_started.Controllers
     {
         public ActionResult Index()
         {
-            return View();
+            return View(new QueueRequestViewModel());
         }
 
         public ActionResult About()
@@ -30,28 +31,30 @@ namespace aspnet_get_started.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> SendMessageToQueue(string message)
+        public async Task<ActionResult> SendMessageToQueue(QueueRequestViewModel model)
         {
-            if (string.IsNullOrWhiteSpace(message))
+            if (!ModelState.IsValid)
             {
-                TempData["QueueError"] = "Zprava nesmi byt prazdna.";
-                return RedirectToAction("Index");
+                return View("Index", model);
             }
 
             try
             {
-                await SendMessageToQueueAsync(message);
-                TempData["QueueSuccess"] = "Zprava byla odeslana do fronty.";
+                BackgroundJobMessage job = await SendMessageToQueueAsync(model);
+
+                ViewBag.QueueSuccess = $"Pozadavek byl zarazen do fronty. Job ID: {job.JobId}";
+                ViewBag.JobJson = JsonConvert.SerializeObject(job, Formatting.Indented);
+
+                return View("Index", new QueueRequestViewModel());
             }
             catch (Exception ex)
             {
-                TempData["QueueError"] = ex.Message;
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View("Index", model);
             }
-
-            return RedirectToAction("Index");
         }
 
-        private static async Task SendMessageToQueueAsync(string message)
+        private static async Task<BackgroundJobMessage> SendMessageToQueueAsync(QueueRequestViewModel model)
         {
             var connectionStringSettings = ConfigurationManager.ConnectionStrings["AzureStorageConnectionString"];
             string connectionString = connectionStringSettings?.ConnectionString;
@@ -66,9 +69,21 @@ namespace aspnet_get_started.Controllers
 
             await queueClient.CreateIfNotExistsAsync();
 
-            string encodedMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
+            var job = new BackgroundJobMessage
+            {
+                JobId = Guid.NewGuid(),
+                Type = "processContactRequest",
+                Subject = model.Subject,
+                Message = model.Message,
+                Priority = model.Priority,
+                CreatedAtUtc = DateTime.UtcNow,
+                Source = "web-app"
+            };
 
-            await queueClient.SendMessageAsync(encodedMessage);
+            string payload = JsonConvert.SerializeObject(job);
+            await queueClient.SendMessageAsync(payload);
+
+            return job;
         }
     }
 }

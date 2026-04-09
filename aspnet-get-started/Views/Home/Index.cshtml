@@ -1,34 +1,60 @@
-﻿@{
+@model aspnet_get_started.Models.QueueRequestViewModel
+
+@{
     ViewBag.Title = "Home Page";
 }
 
 <div class="jumbotron">
-    <h1>Azure Queue</h1>
-    <p class="lead">Jednoduche odeslani zpravy do Azure Storage Queue pro dalsi zpracovani.</p>
+    <h1>Azure Queue Jobs</h1>
+    <p class="lead">Web rychle prijme pozadavek a zaradi ho do fronty. Skutecne zpracovani probiha asynchronne v Azure Functions.</p>
 </div>
 
 <div class="row">
     <div class="col-md-8">
-        @if (TempData["QueueSuccess"] != null)
+        @if (ViewBag.QueueSuccess != null)
         {
-            <div class="alert alert-success">@TempData["QueueSuccess"]</div>
+            <div class="alert alert-success">@ViewBag.QueueSuccess</div>
         }
 
-        @if (TempData["QueueError"] != null)
-        {
-            <div class="alert alert-danger">@TempData["QueueError"]</div>
-        }
+        @Html.ValidationSummary(false, null, new { @class = "alert alert-danger" })
 
         @using (Html.BeginForm("SendMessageToQueue", "Home", FormMethod.Post))
         {
             @Html.AntiForgeryToken()
 
             <div class="form-group">
-                <label for="message">Zprava</label>
-                <textarea id="message" name="message" class="form-control" rows="4" required></textarea>
+                @Html.LabelFor(model => model.Subject)
+                @Html.TextBoxFor(model => model.Subject, new { @class = "form-control", maxlength = "120", required = "required" })
+                @Html.ValidationMessageFor(model => model.Subject, null, new { @class = "text-danger" })
             </div>
 
-            <button type="submit" class="btn btn-primary">Poslat do queue</button>
+            <div class="form-group">
+                @Html.LabelFor(model => model.Message)
+                @Html.TextAreaFor(model => model.Message, new { @class = "form-control", rows = "5", maxlength = "4000", required = "required" })
+                @Html.ValidationMessageFor(model => model.Message, null, new { @class = "text-danger" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.Priority)
+                @Html.DropDownListFor(
+                    model => model.Priority,
+                    new SelectList(new[]
+                    {
+                        new { Value = "low", Text = "low" },
+                        new { Value = "normal", Text = "normal" },
+                        new { Value = "high", Text = "high" }
+                    }, "Value", "Text", Model.Priority),
+                    new { @class = "form-control" })
+                @Html.ValidationMessageFor(model => model.Priority, null, new { @class = "text-danger" })
+            </div>
+
+            <button type="submit" class="btn btn-primary">Zaradit do queue</button>
+        }
+
+        @if (ViewBag.JobJson != null)
+        {
+            <h3>Payload odeslany do queue</h3>
+            <pre>@ViewBag.JobJson</pre>
         }
     </div>
 </div>
