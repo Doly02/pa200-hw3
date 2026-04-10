@@ -42,6 +42,7 @@ namespace aspnet_get_started.Controllers
             {
                 BackgroundJobMessage job = await SendMessageToQueueAsync(model);
 
+                ModelState.Clear();
                 ViewBag.QueueSuccess = $"Pozadavek byl zarazen do fronty. Job ID: {job.JobId}";
 
                 return View("Index", new QueueRequestViewModel());

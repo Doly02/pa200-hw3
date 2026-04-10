@@ -16,7 +16,10 @@
             <div class="alert alert-success">@ViewBag.QueueSuccess</div>
         }
 
-        @Html.ValidationSummary(false, null, new { @class = "alert alert-danger" })
+        @if (!ViewData.ModelState.IsValid)
+        {
+            @Html.ValidationSummary(false, null, new { @class = "alert alert-danger" })
+        }
 
         @using (Html.BeginForm("SendMessageToQueue", "Home", FormMethod.Post))
         {
