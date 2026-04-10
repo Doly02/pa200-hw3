@@ -43,7 +43,6 @@ namespace aspnet_get_started.Controllers
                 BackgroundJobMessage job = await SendMessageToQueueAsync(model);
 
                 ViewBag.QueueSuccess = $"Pozadavek byl zarazen do fronty. Job ID: {job.JobId}";
-                ViewBag.JobJson = JsonConvert.SerializeObject(job, Formatting.Indented);
 
                 return View("Index", new QueueRequestViewModel());
             }
@@ -65,7 +64,13 @@ namespace aspnet_get_started.Controllers
                 throw new ConfigurationErrorsException("V konfiguraci chybi AzureStorageConnectionString.");
             }
 
-            var queueClient = new QueueClient(connectionString, queueName);
+            var queueClient = new QueueClient(
+                connectionString,
+                queueName,
+                new QueueClientOptions
+                {
+                    MessageEncoding = QueueMessageEncoding.None
+                });
 
             await queueClient.CreateIfNotExistsAsync();
 
