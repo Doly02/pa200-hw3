@@ -55,13 +55,17 @@ namespace aspnet_get_started.Controllers
 
         private static async Task<BackgroundJobMessage> SendMessageToQueueAsync(QueueRequestViewModel model)
         {
-            var connectionStringSettings = ConfigurationManager.ConnectionStrings["AzureStorageConnectionString"];
-            string connectionString = connectionStringSettings?.ConnectionString;
+            string connectionString = GetAzureStorageConnectionString();
             string queueName = ConfigurationManager.AppSettings["AzureQueueName"] ?? "jobs";
 
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new ConfigurationErrorsException("V konfiguraci chybi AzureStorageConnectionString.");
+            }
+
+            if (!IsValidAzureStorageConnectionString(connectionString))
+            {
+                throw new ConfigurationErrorsException("AzureStorageConnectionString nema platny format. Ocekava se Azure Storage connection string ve tvaru DefaultEndpointsProtocol=...;AccountName=...;AccountKey=...;EndpointSuffix=...");
             }
 
             var queueClient = new QueueClient(
@@ -89,6 +93,53 @@ namespace aspnet_get_started.Controllers
             await queueClient.SendMessageAsync(payload);
 
             return job;
+        }
+
+        private static string GetAzureStorageConnectionString()
+        {
+            string[] candidates =
+            {
+                Environment.GetEnvironmentVariable("AzureStorageConnectionString"),
+                Environment.GetEnvironmentVariable("CUSTOMCONNSTR_AzureStorageConnectionString"),
+                ConfigurationManager.AppSettings["AzureStorageConnectionString"],
+                ConfigurationManager.ConnectionStrings["AzureStorageConnectionString"]?.ConnectionString
+            };
+
+            foreach (string candidate in candidates)
+            {
+                if (!string.IsNullOrWhiteSpace(candidate))
+                {
+                    return candidate.Trim();
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsValidAzureStorageConnectionString(string connectionString)
+        {
+            if (string.Equals(connectionString, "UseDevelopmentStorage=true", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            string[] settings = connectionString.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            if (settings.Length == 0)
+            {
+                return false;
+            }
+
+            foreach (string setting in settings)
+            {
+                if (setting.IndexOf('=') <= 0)
+                {
+                    return false;
+                }
+            }
+
+            return connectionString.IndexOf("AccountName=", StringComparison.OrdinalIgnoreCase) >= 0
+                && (connectionString.IndexOf("AccountKey=", StringComparison.OrdinalIgnoreCase) >= 0
+                    || connectionString.IndexOf("SharedAccessSignature=", StringComparison.OrdinalIgnoreCase) >= 0);
         }
     }
 }
