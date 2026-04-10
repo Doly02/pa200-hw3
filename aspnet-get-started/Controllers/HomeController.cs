@@ -74,7 +74,7 @@ namespace aspnet_get_started.Controllers
                 queueName,
                 new QueueClientOptions
                 {
-                    MessageEncoding = QueueMessageEncoding.None
+                    MessageEncoding = QueueMessageEncoding.Base64
                 });
 
             await queueClient.CreateIfNotExistsAsync();
