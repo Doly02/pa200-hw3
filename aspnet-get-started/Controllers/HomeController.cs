@@ -100,8 +100,14 @@ namespace aspnet_get_started.Controllers
             string[] candidates =
             {
                 Environment.GetEnvironmentVariable("AzureStorageConnectionString"),
+                Environment.GetEnvironmentVariable("APPSETTING_AzureStorageConnectionString"),
                 Environment.GetEnvironmentVariable("CUSTOMCONNSTR_AzureStorageConnectionString"),
+                Environment.GetEnvironmentVariable("AzureWebJobsStorage"),
+                Environment.GetEnvironmentVariable("APPSETTING_AzureWebJobsStorage"),
+                Environment.GetEnvironmentVariable("CUSTOMCONNSTR_AzureWebJobsStorage"),
                 ConfigurationManager.AppSettings["AzureStorageConnectionString"],
+                ConfigurationManager.AppSettings["AzureWebJobsStorage"],
+                ConfigurationManager.ConnectionStrings["AzureWebJobsStorage"]?.ConnectionString,
                 ConfigurationManager.ConnectionStrings["AzureStorageConnectionString"]?.ConnectionString
             };
 
